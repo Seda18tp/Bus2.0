@@ -9,22 +9,29 @@ Plataforma de gestión, monitoreo GPS en vivo y control de abordaje con QR para 
 - Despliegue serverless en Vercel
 
 ## Estructura del proyecto
+
+**Importante:** todo archivo `.php` ejecutable vive dentro de `/api/`. Esto es
+obligatorio para el runtime comunitario `vercel-php`: los `.php` fuera de
+`/api/` no se ejecutan de forma fiable en Vercel y terminan descargándose
+como archivo estático en vez de renderizarse. Las URLs "bonitas" (`/login`,
+`/admin/dashboard`, etc.) se logran mediante `routes` en `vercel.json`.
+
 ```
 buscontrol/
 ├── api/
-│   ├── ubicacion.php      # POST (conductor emite GPS) / GET (consulta ubicación)
-│   ├── generar_qr.php     # Genera pase QR (estudiante)
-│   └── validar_qr.php     # Valida/"quema" el QR (conductor)
-├── admin/dashboard.php
-├── conductor/dashboard.php
-├── estudiante/dashboard.php
+│   ├── index.php                → /
+│   ├── login.php                → /login
+│   ├── register.php             → /register
+│   ├── logout.php               → /logout
+│   ├── admin_dashboard.php      → /admin/dashboard
+│   ├── conductor_dashboard.php  → /conductor/dashboard
+│   ├── estudiante_dashboard.php → /estudiante/dashboard
+│   ├── ubicacion.php            # POST (GPS conductor) / GET (consulta) → /api/ubicacion.php
+│   ├── generar_qr.php           # Genera pase QR (estudiante) → /api/generar_qr.php
+│   └── validar_qr.php           # Valida/"quema" el QR (conductor) → /api/validar_qr.php
 ├── includes/
 │   ├── config.php         # Conexión PDO + cabeceras de seguridad + sesión
 │   └── auth.php           # CSRF, rate limiting, roles, sanitización
-├── login.php
-├── register.php
-├── logout.php
-├── index.php
 ├── schema.sql              # Esquema completo de la base de datos
 ├── vercel.json
 └── .env.example

@@ -79,6 +79,19 @@ function rolid_actual(): int
 }
 
 /**
+ * Determina si el script actualmente en ejecución es un endpoint JSON puro
+ * (no una página HTML). Se basa en el archivo físico invocado, no en la URL,
+ * porque en Vercel todos los .php viven bajo /api/ y el enrutamiento (routes)
+ * reescribe la URL — comprobar el prefijo /api/ en REQUEST_URI no es fiable.
+ */
+function es_endpoint_json(): bool
+{
+    $endpointsJson = ['ubicacion.php', 'generar_qr.php', 'validar_qr.php'];
+    $archivo = basename((string)($_SERVER['SCRIPT_FILENAME'] ?? ''));
+    return in_array($archivo, $endpointsJson, true);
+}
+
+/**
  * Exige un rol específico. Comparación flexible por nombre O por rolId
  * para evitar cierres de sesión accidentales por inconsistencias de mayúsculas.
  *
@@ -87,13 +100,11 @@ function rolid_actual(): int
  */
 function exigir_rol(string $rolNombre, int $rolId): void
 {
-    $esApi = str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/api/');
-
     if (!isset($_SESSION['usuario_id']) || (rol_actual() !== strtolower($rolNombre) && rolid_actual() !== $rolId)) {
-        if ($esApi) {
+        if (es_endpoint_json()) {
             json_response(['ok' => false, 'error' => 'No autorizado'], 401);
         } else {
-            header('Location: /login.php?msg=sesion_requerida');
+            header('Location: /login?msg=sesion_requerida');
             exit;
         }
     }
@@ -103,11 +114,10 @@ function exigir_rol(string $rolNombre, int $rolId): void
 function exigir_sesion(): void
 {
     if (!usuario_autenticado()) {
-        $esApi = str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/api/');
-        if ($esApi) {
+        if (es_endpoint_json()) {
             json_response(['ok' => false, 'error' => 'No autorizado'], 401);
         } else {
-            header('Location: /login.php?msg=sesion_requerida');
+            header('Location: /login?msg=sesion_requerida');
             exit;
         }
     }

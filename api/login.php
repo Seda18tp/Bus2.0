@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/../includes/auth.php';
 
 // Si ya hay sesión activa, redirigir directo a su panel
 if (usuario_autenticado()) {
@@ -11,10 +11,10 @@ if (usuario_autenticado()) {
 function ruta_dashboard_por_rol(string $rol): string
 {
     return match ($rol) {
-        'admin'      => '/admin/dashboard.php',
-        'conductor'  => '/conductor/dashboard.php',
-        'estudiante' => '/estudiante/dashboard.php',
-        default      => '/login.php',
+        'admin'      => '/admin/dashboard',
+        'conductor'  => '/conductor/dashboard',
+        'estudiante' => '/estudiante/dashboard',
+        default      => '/login',
     };
 }
 
@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 
     <p class="text-center text-sm text-slate-500 mt-6">
-        ¿No tienes cuenta? <a href="register.php" class="text-blue-600 font-semibold">Regístrate</a>
+        ¿No tienes cuenta? <a href="/register" class="text-blue-600 font-semibold">Regístrate</a>
     </p>
 </div>
 </body>

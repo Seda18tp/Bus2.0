@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/../includes/config.php';
 
 // Vaciar todas las variables de sesión activa
 $_SESSION = [];
@@ -25,5 +25,5 @@ if (ini_get('session.use_cookies')) {
 // Destruir los datos de la sesión activa en el servidor
 session_destroy();
 
-header('Location: /login.php');
+header('Location: /login');
 exit;

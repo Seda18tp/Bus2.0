@@ -30,7 +30,7 @@ $token  = csrf_token();
     </div>
     <div class="flex items-center gap-3">
         <span class="hidden sm:block text-sm text-slate-300"><?= $nombre ?></span>
-        <a href="/logout.php" class="text-slate-300 hover:text-red-400 transition" title="Cerrar sesión">
+        <a href="/logout" class="text-slate-300 hover:text-red-400 transition" title="Cerrar sesión">
             <i class="fa-solid fa-right-from-bracket text-lg"></i>
         </a>
     </div>

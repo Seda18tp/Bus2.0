@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/../includes/auth.php';
 
 $errores = [];
 $exito = false;
@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php if ($exito): ?>
         <div class="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-2xl p-4 text-sm mb-4">
             <i class="fa-solid fa-circle-check mr-1"></i>
-            Cuenta creada con éxito. Ya puedes <a href="login.php" class="font-semibold underline">iniciar sesión</a>.
+            Cuenta creada con éxito. Ya puedes <a href="/login" class="font-semibold underline">iniciar sesión</a>.
         </div>
     <?php else: ?>
         <?php if ($errores): ?>
@@ -137,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <p class="text-center text-sm text-slate-500 mt-6">
-        ¿Ya tienes cuenta? <a href="login.php" class="text-blue-600 font-semibold">Inicia sesión</a>
+        ¿Ya tienes cuenta? <a href="/login" class="text-blue-600 font-semibold">Inicia sesión</a>
     </p>
 </div>
 </body>
