@@ -1,12 +1,13 @@
 {
   "functions": {
-    "api/*.php": { "runtime": "vercel-php@0.7.3" },
-    "*.php": { "runtime": "vercel-php@0.7.3" },
-    "admin/*.php": { "runtime": "vercel-php@0.7.3" },
-    "conductor/*.php": { "runtime": "vercel-php@0.7.3" },
-    "estudiante/*.php": { "runtime": "vercel-php@0.7.3" }
+    "api/**/*.php": {
+      "runtime": "vercel-php@0.6.0"
+    }
   },
-  "rewrites": [
-    { "source": "/((?!api/|admin/|conductor/|estudiante/|includes/).*)", "destination": "/$1" }
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    }
   ]
 }
