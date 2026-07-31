@@ -7,13 +7,13 @@
 declare(strict_types=1);
 
 // ---------------------------------------------------------------------
-// Reporte de errores (desactivar display_errors en producción real)
+// Reporte de errores
 // ---------------------------------------------------------------------
 error_reporting(E_ALL);
-ini_set('display_errors', getenv('APP_ENV') === 'production' ? '0' : '1');
+ini_set('display_errors', (getenv('APP_ENV') === 'production' || ($_ENV['APP_ENV'] ?? '') === 'production') ? '0' : '1');
 
 // ---------------------------------------------------------------------
-// Cabeceras de seguridad (aplican a todas las respuestas HTML/JSON)
+// Cabeceras de seguridad
 // ---------------------------------------------------------------------
 if (!headers_sent()) {
     header('X-Content-Type-Options: nosniff');
@@ -24,15 +24,15 @@ if (!headers_sent()) {
 }
 
 // ---------------------------------------------------------------------
-// Configuración de sesión segura (antes de session_start)
+// Configuración de sesión segura
 // ---------------------------------------------------------------------
 if (session_status() === PHP_SESSION_NONE) {
-    $secureCookies = (getenv('APP_ENV') === 'production');
+    $secureCookies = (getenv('APP_ENV') === 'production' || ($_ENV['APP_ENV'] ?? '') === 'production');
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
         'domain'   => '',
-        'secure'   => $secureCookies, // true en producción (HTTPS obligatorio con Vercel)
+        'secure'   => $secureCookies,
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
@@ -40,7 +40,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Regeneración periódica del id de sesión (mitiga fixation) sin destruir datos
 if (!isset($_SESSION['_last_regen'])) {
     $_SESSION['_last_regen'] = time();
 } elseif (time() - $_SESSION['_last_regen'] > 900) {
@@ -49,17 +48,16 @@ if (!isset($_SESSION['_last_regen'])) {
 }
 
 // ---------------------------------------------------------------------
-// Variables de entorno de conexión (definir en Vercel: Settings > Env Vars)
+// Variables de entorno con soporte multi-fuente (Vercel / Local)
 // ---------------------------------------------------------------------
-define('DB_HOST', getenv('DB_HOST') ?: '');
-define('DB_PORT', getenv('DB_PORT') ?: '5432');
-define('DB_NAME', getenv('DB_NAME') ?: 'postgres');
-define('DB_USER', getenv('DB_USER') ?: '');
-define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_HOST', getenv('DB_HOST') ?: $_ENV['DB_HOST'] ?? 'db.galpttrydwvtwvgbnsoz.supabase.co');
+define('DB_PORT', getenv('DB_PORT') ?: $_ENV['DB_PORT'] ?? '5432');
+define('DB_NAME', getenv('DB_NAME') ?: $_ENV['DB_NAME'] ?? 'postgres');
+define('DB_USER', getenv('DB_USER') ?: $_ENV['DB_USER'] ?? 'postgres');
+define('DB_PASS', getenv('DB_PASS') ?: $_ENV['DB_PASS'] ?? 'BusControl2.0SEDA');
 
 /**
  * Devuelve una conexión PDO singleton a PostgreSQL (Supabase).
- * Usa siempre PDO::prepare()/execute() con parámetros — nunca concatenar SQL.
  */
 function db(): PDO
 {
@@ -80,25 +78,28 @@ function db(): PDO
         $pdo = new PDO($dsn, DB_USER, DB_PASS, [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false, // consultas preparadas reales -> anti SQL injection
-            PDO::ATTR_PERSISTENT         => false, // recomendado en entorno serverless (sin estado persistente)
+            PDO::ATTR_EMULATE_PREPARES   => false,
+            PDO::ATTR_PERSISTENT         => false,
         ]);
         return $pdo;
     } catch (PDOException $e) {
         error_log('[BUSCONTROL][DB_ERROR] ' . $e->getMessage());
         http_response_code(500);
         if (str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/api/')) {
-            header('Content-Type: application/json');
-            echo json_encode(['ok' => false, 'error' => 'Error de conexión con la base de datos']);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['ok' => false, 'error' => 'Error de conexión con la base de datos: ' . $e->getMessage()]);
         } else {
-            echo 'Error de conexión con la base de datos. Intenta más tarde.';
+            echo 'Error de conexión con la base de datos: ' . htmlspecialchars($e->getMessage());
         }
         exit;
     }
 }
 
+// Instanciar variable global para scripts legados que usen $pdo directo
+$pdo = db();
+
 /**
- * Envía una respuesta JSON estandarizada y termina la ejecución.
+ * Envía una respuesta JSON estandarizada.
  */
 function json_response(array $data, int $status = 200): void
 {
