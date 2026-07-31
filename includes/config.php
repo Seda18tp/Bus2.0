@@ -50,7 +50,7 @@ if (!isset($_SESSION['_last_regen'])) {
 // ---------------------------------------------------------------------
 // Variables de entorno con soporte multi-fuente (Vercel / Local)
 // ---------------------------------------------------------------------
-define('DB_HOST', getenv('DB_HOST') ?: $_ENV['DB_HOST'] ?? 'db.galpttrydwvtwvgbnsoz.supabase.co');
+define('DB_HOST', getenv('DB_HOST') ?: $_ENV['DB_HOST'] ?? 'aws-1-us-west-2.pooler.supabase.com');
 define('DB_PORT', getenv('DB_PORT') ?: $_ENV['DB_PORT'] ?? '5432');
 define('DB_NAME', getenv('DB_NAME') ?: $_ENV['DB_NAME'] ?? 'postgres');
 define('DB_USER', getenv('DB_USER') ?: $_ENV['DB_USER'] ?? 'postgres');
