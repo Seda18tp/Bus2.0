@@ -53,7 +53,7 @@ if (!isset($_SESSION['_last_regen'])) {
 define('DB_HOST', getenv('DB_HOST') ?: $_ENV['DB_HOST'] ?? 'aws-1-us-west-2.pooler.supabase.com');
 define('DB_PORT', getenv('DB_PORT') ?: $_ENV['DB_PORT'] ?? '6543');
 define('DB_NAME', getenv('DB_NAME') ?: $_ENV['DB_NAME'] ?? 'postgres');
-define('DB_USER', getenv('DB_USER') ?: $_ENV['DB_USER'] ?? 'postgres');
+define('DB_USER', getenv('DB_USER') ?: $_ENV['DB_USER'] ?? 'postgres.galpttrydwvtwvgbnsoz');
 define('DB_PASS', getenv('DB_PASS') ?: $_ENV['DB_PASS'] ?? 'BusControl2.0SEDA');
 
 /**
