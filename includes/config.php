@@ -15,11 +15,25 @@ ini_set('display_errors', (getenv('APP_ENV') === 'production' || ($_ENV['APP_ENV
 // ---------------------------------------------------------------------
 // Cabeceras de seguridad
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+// Cabeceras de seguridad (corregidas con font-src e img-src ampliado)
+// ---------------------------------------------------------------------
 if (!headers_sent()) {
     header('X-Content-Type-Options: nosniff');
     header('X-Frame-Options: DENY');
     header('Referrer-Policy: strict-origin-when-cross-origin');
-    header("Content-Security-Policy: default-src 'self'; img-src * data:; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://unpkg.com; connect-src 'self'; frame-ancestors 'none'");
+    
+    // CSP con permisos explícitos para FontAwesome, Google Fonts, QuickChart y Leaflet Maps
+    header("Content-Security-Policy: " .
+        "default-src 'self'; " .
+        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; " .
+        "style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://fonts.googleapis.com; " .
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://unpkg.com; " .
+        "img-src * data: blob: https://quickchart.io https://*.tile.openstreetmap.org; " .
+        "connect-src 'self' https://quickchart.io https://*.tile.openstreetmap.org; " .
+        "frame-ancestors 'none'"
+    );
+    
     header('Permissions-Policy: geolocation=(self), camera=(self)');
 }
 
