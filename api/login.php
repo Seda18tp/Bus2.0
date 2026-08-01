@@ -1,68 +1,76 @@
 <?php
-declare(strict_types=1);
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/includes/config.php';
 
-// Si ya hay sesión activa, redirigir directo a su panel
-if (usuario_autenticado()) {
-    header('Location: ' . ruta_dashboard_por_rol(rol_actual()));
+header('Content-Type: application/json; charset=utf-8');
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['status' => 'error', 'message' => 'Método no permitido']);
     exit;
 }
 
-function ruta_dashboard_por_rol(string $rol): string
-{
-    return match ($rol) {
-        'admin'      => '/admin/dashboard',
-        'conductor'  => '/conductor/dashboard',
-        'estudiante' => '/estudiante/dashboard',
-        default      => '/login',
-    };
+$correo = trim($_POST['correo'] ?? $_POST['email'] ?? '');
+$password = trim($_POST['password'] ?? $_POST['contrasena'] ?? '');
+
+if (empty($correo) || empty($password)) {
+    echo json_encode(['status' => 'error', 'message' => 'Por favor ingresa correo y contraseña']);
+    exit;
 }
 
-$error = null;
+try {
+    $db = db();
+    
+    // Buscar usuario por correo (case-insensitive)
+    $stmt = $pdo->prepare('SELECT id, nombre, correo, password, rol, "rolId" FROM usuarios WHERE LOWER(correo) = LOWER(?)');
+$stmt->execute([$correo]);
+$usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!csrf_verify($_POST['csrf_token'] ?? null)) {
-        $error = 'Sesión de formulario expirada. Recarga la página e intenta de nuevo.';
-    } elseif (!rate_limit('login', 6, 300)) {
-        $error = 'Demasiados intentos fallidos. Espera unos minutos antes de volver a intentar.';
-    } else {
-        $email    = filter_var(trim((string)($_POST['email'] ?? '')), FILTER_VALIDATE_EMAIL);
-        $password = (string)($_POST['password'] ?? '');
-
-        if (!$email || $password === '') {
-            $error = 'Ingresa un correo y una contraseña válidos.';
-        } else {
-            try {
-                $stmt = db()->prepare(
-                    'SELECT id, nombre, email, password_hash, rol, "rolId", activo
-                     FROM usuarios WHERE email = :email LIMIT 1'
-                );
-                $stmt->execute(['email' => $email]);
-                $usuario = $stmt->fetch();
-
-                // Mensaje genérico deliberado: no revelar si el correo existe o no
-                if (!$usuario || !password_verify($password, $usuario['password_hash'])) {
-                    $error = 'Correo o contraseña incorrectos.';
-                } elseif (!$usuario['activo']) {
-                    $error = 'Esta cuenta está inhabilitada. Contacta al administrador.';
-                } else {
-                    session_regenerate_id(true);
-                    $_SESSION['usuario_id'] = $usuario['id'];
-                    $_SESSION['nombre']     = $usuario['nombre'];
-                    $_SESSION['email']      = $usuario['email'];
-                    $_SESSION['rol']        = strtolower($usuario['rol']);
-                    $_SESSION['rolid']      = (int)$usuario['rolId'];
-                    $_SESSION['_last_regen'] = time();
-
-                    header('Location: ' . ruta_dashboard_por_rol(strtolower($usuario['rol'])));
-                    exit;
-                }
-            } catch (Throwable $ex) {
-                error_log('[BUSCONTROL][LOGIN] ' . $ex->getMessage());
-                $error = 'Ocurrió un error al iniciar sesión. Intenta más tarde.';
-            }
-        }
+    if (!$usuario) {
+        echo json_encode(['status' => 'error', 'message' => 'El correo electrónico no está registrado']);
+        exit;
     }
+
+    // Comprobar contraseña (Soporta Hash de password_hash() o Texto Plano si aún no se ha hasheado)
+    $passwordValida = false;
+    if (password_verify($password, $usuario['password'])) {
+        $passwordValida = true;
+    } elseif ($password === $usuario['password']) {
+        // Respaldo por si creaste usuarios de prueba en texto plano
+        $passwordValida = true;
+    }
+
+    if (!$passwordValida) {
+        echo json_encode(['status' => 'error', 'message' => 'Contraseña incorrecta']);
+        exit;
+    }
+
+    // Iniciar y guardar datos en la sesión
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $_SESSION['usuario_id'] = $usuario['id'];
+    $_SESSION['id']         = $usuario['id'];
+    $_SESSION['nombre']     = $usuario['nombre'];
+    $_SESSION['correo']     = $usuario['correo'];
+    $_SESSION['rol']        = strtolower($usuario['rol'] ?? '');
+    $_SESSION['rolid']      = $usuario['rolId'] ?? $usuario['rolid'] ?? 3;
+
+    // Determinar redirección
+    $redirect = match ($_SESSION['rol']) {
+        'admin'      => '/admin/dashboard.php',
+        'conductor'  => '/conductor/dashboard.php',
+        'estudiante' => '/estudiante/dashboard.php',
+        default      => '/estudiante/dashboard.php',
+    };
+
+    echo json_encode([
+        'status' => 'success',
+        'message' => 'Inicio de sesión exitoso',
+        'redirect' => $redirect
+    ]);
+
+} catch (Exception $e) {
+    echo json_encode(['status' => 'error', 'message' => 'Error de servidor: ' . $e->getMessage()]);
 }
 ?>
 <!DOCTYPE html>

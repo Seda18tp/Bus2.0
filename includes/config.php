@@ -41,14 +41,14 @@ if (!headers_sent()) {
 // Configuración de sesión segura
 // ---------------------------------------------------------------------
 if (session_status() === PHP_SESSION_NONE) {
-    $secureCookies = (getenv('APP_ENV') === 'production' || ($_ENV['APP_ENV'] ?? '') === 'production');
+    // En Vercel siempre es HTTPS
     session_set_cookie_params([
-        'lifetime' => 0,
+        'lifetime' => 86400, // 24 horas
         'path'     => '/',
         'domain'   => '',
-        'secure'   => $secureCookies,
+        'secure'   => true,   // Obligatorio para HTTPS en Vercel
         'httponly' => true,
-        'samesite' => 'Lax',
+        'samesite' => 'Lax',  // Permite mantener sesión entre redirecciones
     ]);
     session_name('BC_SESSID');
     session_start();
